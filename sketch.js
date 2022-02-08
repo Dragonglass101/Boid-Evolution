@@ -1,8 +1,14 @@
+"use strict"
+let fR = 0;
+let healthReduce = 0.2;
+let generation = 1;
 const flock = [];
-const walls = [];
 const obstacles = [];
-var totalBoids = 100;
+const food = [];
+const poison = [];
+var totalBoids = 500;
 var totalObs = 0;
+var totalFood = 500;
 
 
 const mouse = {
@@ -26,8 +32,8 @@ document.addEventListener('mouseup', function() {
 
 function setup() {
     background('lightBlue');
-    // createCanvas(1500, 900);
-    createCanvas(900, 600);
+    createCanvas(2500, 1500);
+    // createCanvas(900, 600);
     textSize(30);
     textAlign(CENTER);
 
@@ -35,73 +41,127 @@ function setup() {
     cohesionSlider = createSlider(0, 5, 1, 0.1);
     separationSlider = createSlider(0, 5, 1.2, 0.05);
     obsRadiSlider = createSlider(10, 30, 1, 5);
-    for (let i = 0; i < totalBoids; i++) {
-        let newBoid = new Boid(random(width), random(height));
+
+    flock.push(new Boid(random(width), random(height), [200, 10, 700]));
+    flock.push(new Boid(random(width), random(height), [20, 300, 500]));
+    for (let i = 2; i < totalBoids; i++) {
+        let newBoid = new Boid(random(width), random(height), [floor(random(20, 70)), floor(random(20, 70)), floor(random(600, 1000))]);
         flock.push(newBoid);
     }
     for (let i = 0; i < totalObs; i++) {
         let newObs = new Obstacle(random(width), random(height), floor(random(20, 50)));
         obstacles.push(newObs);
     }
+    for (let i = 0; i < totalFood; i++) {
+        let newFood = new Food(random(width), random(height));
+        if (newFood.nutritionValue > 0)
+            food.push(newFood);
+        else
+            poison.push(newFood);
+    }
 }
-let fR;
 
 function draw() {
     background(173, 216, 230); // light blue
     // background('lightgreen')
 
-    if (frameCount % 50 == 0)
+    if (frameCount % 50 == 0) {
         fR = floor(frameRate());
-    textSize(30);
+    }
+    if (frameCount % 1000 == 0 && totalBoids != 0) {
+        generation++;
+    }
+
+    fill('blue');
+    textSize(50);
+    text("longer Green rod means more affinity towards food, longer Red rod means more affinity towards poison", width / 2, 50);
     fill('black');
-    text(`FrameRate = ${fR}`, 150, 50);
-    text(`Birds = ${totalBoids}`, 150, 100);
-    text(`Obstacles = ${totalObs}`, 150, 150);
+    textSize(25);
+    text(`FrameRate = ${fR}`, 100, 80);
+    text(`Birds = ${flock.length}`, 100, 110);
+    text(`Obstacles = ${obstacles.length}`, 100, 140);
+    text(`Food = ${food.length + poison.length}`, 100, 170);
+    textSize(30);
+    fill('purple');
+    text(`Generation = ${generation}`, 120, 220);
+    // text(`GenTime = ${flock[0].genTime}`, 100, 230);
+    // text(`health = ${floor(flock[0].health)}`, 150, 200);
+
+    if (food.length + poison.length < 500 && totalBoids != 0) {
+        for (let i = 0; i < 50; i++) {
+            let newFood = new Food(random(width), random(height));
+            if (newFood.nutritionValue > 0)
+                food.push(newFood);
+            else
+                poison.push(newFood);
+        }
+    }
+
     let boundary = new Rectangle(width / 2, height / 2, width, height);
     let qtBoid = new QuadTree(boundary, 2);
     let qtObs = new QuadTree(boundary, 4);
-    for (let i = 0; i < totalBoids; i++) {
-        qtBoid.insert(flock[i]);
-    }
-    for (let i = 0; i < totalObs; i++) {
-        qtObs.insert(obstacles[i]);
-    }
-    // qtBoid.show();
+    let qtFood = new QuadTree(boundary, 4);
+    let qtPoison = new QuadTree(boundary, 4);
 
     // mouse handling
     if (mouse.click == true) {
-        let ObsRange = new Rectangle(mouseX, mouseY, 100, 100);
-        let obsInArea = qtObs.query(ObsRange);
-        let check = 1;
-        let r = floor(random(10, 40));
-        r = obsRadiSlider.value();
-        // r = 10;
-        for (let ob of obsInArea) {
-            check *= (Math.sqrt(((ob.position.x - mouseX) * (ob.position.x - mouseX)) +
-                ((ob.position.y - mouseY) * (ob.position.y - mouseY))) > (ob.r + r));
-            if (check == 0)
-                break;
-        }
-        if (check) {
-            obstacles.push(new Obstacle(floor(mouseX), floor(mouseY), floor(r)));
-            totalObs++;
-        }
+        // GENERATE OBSTACLES
+        // let Range = new Rectangle(mouseX, mouseY, 100, 100);
+        // let obsInArea = qtObs.query(Range);
+        // let check = 1;
+        // let r = floor(random(10, 40));
+        // r = obsRadiSlider.value();
+        // // r = 10;
+        // for (let ob of obsInArea) {
+        //     check *= (Math.sqrt(((ob.position.x - mouseX) * (ob.position.x - mouseX)) +
+        //         ((ob.position.y - mouseY) * (ob.position.y - mouseY))) > (ob.r + r));
+        //     if (check == 0)
+        //         break;
+        // }
+        // if (check) {
+        //     obstacles.push(new Obstacle(floor(mouseX), floor(mouseY), floor(r)));
+        //     totalObs++;
+        // }
+        //_______________________________________________________________________________
+
+        // GENERATE FOOD
+        // for (let i = 0; i < 50; i++) {
+        //     let newFood = new Food(random(width), random(height));
+        //     if (newFood.nutritionValue > 0)
+        //         food.push(newFood);
+        //     else
+        //         poison.push(newFood);
+        // }
+        poison.splice(0, poison.length);
     }
 
 
-    for (let boid of flock) {
-        boid.edges();
-        // if (frameCount % 5 == 0)
-        boid.flock(qtBoid, qtObs);
-
-        boid.update();
-        boid.show();
+    for (let f of food) {
+        qtFood.insert(f);
+        f.show();
+    }
+    for (let p of poison) {
+        qtPoison.insert(p);
+        p.show();
     }
     for (let obs of obstacles) {
+        qtObs.insert(obs);
         obs.show();
     }
-    for (let w of walls) {
-        w.show();
+    for (let boid of flock) {
+        qtBoid.insert(boid);
+        boid.edges();
+        // if (frameCount % 5 == 0)
+        // boid.flock(qtBoid, qtObs);
+
+        boid.eat(qtFood, true);
+        if (flock.length != 1) {
+            boid.decreaseHealth();
+            boid.eat(qtPoison, false);
+        }
+        boid.genChild();
+        boid.update();
+        boid.show();
     }
     // console.log(alignSlider.value(), cohesionSlider.value(), separationSlider.value());
 }
