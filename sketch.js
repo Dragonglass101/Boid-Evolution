@@ -2,6 +2,7 @@
 let fR = 0;
 let healthReduce = 0.2;
 let generation = 1;
+let showPerception = false;
 const flock = [];
 const obstacles = [];
 const food = [];
@@ -25,9 +26,11 @@ document.addEventListener("mousedown", function() {
     // totalObs++;
     mouse.click = true;
     console.log(mouseX, mouseY);
+    showPerception = true;
 });
 document.addEventListener('mouseup', function() {
     mouse.click = false;
+    showPerception = false;
 });
 
 function setup() {
@@ -74,7 +77,8 @@ function draw() {
 
     fill('blue');
     textSize(50);
-    text("longer Green rod means more affinity towards food, longer Red rod means more affinity towards poison", width / 2, 50);
+    if (showPerception)
+        text("longer Green rod means more affinity towards food, longer Red rod means more affinity towards poison", width / 2, 50);
     fill('black');
     textSize(25);
     text(`FrameRate = ${fR}`, 100, 80);
@@ -132,7 +136,7 @@ function draw() {
         //     else
         //         poison.push(newFood);
         // }
-        poison.splice(0, poison.length);
+        // poison.splice(0, poison.length);
     }
 
 
@@ -148,18 +152,26 @@ function draw() {
         qtObs.insert(obs);
         obs.show();
     }
+    let t1, t2;
     for (let boid of flock) {
         qtBoid.insert(boid);
         boid.edges();
-        // if (frameCount % 5 == 0)
+
+        // t1 = millis();
         // boid.flock(qtBoid, qtObs);
+        // t2 = millis();
+        // if (frameCount % 100 == 0)
+        //     console.log("flock " + (t2 - t1));
 
         boid.eat(qtFood, true);
+
         if (flock.length != 1) {
             boid.decreaseHealth();
             boid.eat(qtPoison, false);
         }
         boid.genChild();
+
+
         boid.update();
         boid.show();
     }

@@ -1,4 +1,5 @@
 "use strict"
+let area = 100;
 class Boid {
     constructor(x, y, [fP, pP, gT]) {
         this.index = flock.length + 1;
@@ -16,7 +17,7 @@ class Boid {
         this.r = 5;
         this.radians = 0;
         // cover area
-        this.area = 30;
+        this.area = area;
         this.obstaclePerception = 100;
 
         // number of frames of avoidance
@@ -107,7 +108,7 @@ class Boid {
             );
             if (other != this && d < perceptionRadius) {
                 let diff = p5.Vector.sub(this.position, other.position);
-                diff.div(d);
+                diff.div(d * d);
                 steering.add(diff);
                 total++;
             }
@@ -194,6 +195,7 @@ class Boid {
         if (this.ObsKill(obsInArea))
             return;
 
+        // if (this.index == 1)
         // this.lineDraw(boidsInArea);
 
         // let alignment = this.align(flock);
@@ -317,20 +319,22 @@ class Boid {
 
     show() {
         // Perception areas
-        let angle = atan2(this.velocity.y, this.velocity.x);
-        push();
-        stroke('green');
-        line(this.position.x, this.position.y, this.position.x + this.foodPerception * Math.cos(angle), this.position.y + this.foodPerception * Math.sin(angle));
-        pop();
-        push();
-        stroke('red');
-        line(this.position.x, this.position.y, this.position.x + this.poisonPerception * Math.cos(PI + angle), this.position.y + this.poisonPerception * Math.sin(PI + angle));
-        pop();
+        if (showPerception) {
+            let angle = atan2(this.velocity.y, this.velocity.x);
+            push();
+            stroke('green');
+            line(this.position.x, this.position.y, this.position.x + this.foodPerception * Math.cos(angle), this.position.y + this.foodPerception * Math.sin(angle));
+            pop();
+            push();
+            stroke('red');
+            line(this.position.x, this.position.y, this.position.x + this.poisonPerception * Math.cos(PI + angle), this.position.y + this.poisonPerception * Math.sin(PI + angle));
+            pop();
+        }
 
         // Triangle Shaped Boid
         push();
-        let gr = color(0, 255, 0);
-        let rd = color(255, 0, 0);
+        let gr = color('yellow');
+        let rd = color('purple');
         let netCol = lerpColor(rd, gr, this.health / 100);
         stroke(0);
         noFill();
@@ -371,6 +375,7 @@ class Boid {
         //         line(this.position.x, this.position.y, this.position.x + 100 * Math.cos(alpha + theta), this.position.y + 100 * Math.sin(alpha + theta));
         //     pop();
         // }
+
     }
 }
 // obstacles                                     - Done
@@ -380,4 +385,3 @@ class Boid {
 //           \__ max force
 //            \_ max speed
 // Triangular Boids                              - Done
-// Flake - computational beauty of nature
